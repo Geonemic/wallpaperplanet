@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .categories button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .categories button:hover {
+            background-color: #0056b3;
+        }
+
+        .categories button.active {
+            background-color: #0056b3;
+        }
+
+        .randomize-container {
+            margin-bottom: 20px;
+        }
+
+        .randomize-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .randomize-btn:hover {
+            background-color: #218838;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .gallery img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gallery img:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px; /* Adjust as needed */
+        }
+
+        /* From Uiverse.io by e-coders */
+        button {
+            appearance: none;
+            background-color: #fafbfc;
+            border: 1px solid rgba(27, 31, 35, 0.15);
+            border-radius: 6px;
+            box-shadow:
+                rgba(27, 31, 35, 0.04) 0 1px 0,
+                rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+            box-sizing: border-box;
+            color: #24292e;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            list-style: none;
+            padding: 6px 16px;
+            position: relative;
+            transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            vertical-align: middle;
+            white-space: nowrap;
+            word-wrap: break-word;
+        }
+
+        button:hover {
+            background-color: #f3f4f6;
+            text-decoration: none;
+            transition-duration: 0.1s;
+        }
+
+        button:disabled {
+            background-color: #fafbfc;
+            border-color: rgba(27, 31, 35, 0.15);
+            color: #959da5;
+            cursor: default;
+        }
+
+        button:active {
+            background-color: #edeff2;
+            box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+            transition: none 0s;
+        }
+
+        button:focus {
+            outline: 1px transparent;
+        }
+
+        button:before {
+            display: none;
+        }
+
+        button:-webkit-details-marker {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="categories">
+        <button data-category="all" class="active">All</button>
+        <button data-category="nature">Nature</button>
+        <button data-category="animals">Animals</button>
+        <button data-category="architecture">Architecture</button>
+    </div>
+
+    <div class="randomize-container">
+        <button id="randomizeBtn" class="randomize-btn">Randomize</button>
+    </div>
+
+    <div class="gallery" id="gallery">
+        <!-- Images will be loaded here -->
+    </div>
+
+    <div class="load-more-container">
+        <button id="loadMoreBtn">Load More</button>
+    </div>
+
+    <script>
+        const gallery = document.getElementById('gallery');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const categories = document.querySelector('.categories');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+
+        const imageData = [
+            { src: 'img/one.webp', categories: ['nature', 'animals'] },
+            { src: 'img/Two.webp', categories: ['architecture'] },
+            { src: 'img/Three.webp', categories: ['nature'] },
+            { src: 'img/one.webp', categories: ['animals'] },
+            { src: 'img/Two.webp', categories: ['architecture', 'nature'] },
+            { src: 'img/Three.webp', categories: ['nature'] },
+        ];
+
+        let imagesLoaded = 0;
+        const imagesPerLoad = 48;
+        let activeCategories = ['all'];
+
+        function loadImages() {
+            const fragment = document.createDocumentFragment();
+            const filteredImages = imageData.filter(img =>
+                activeCategories.includes('all') || img.categories.some(category => activeCategories.includes(category))
+            );
+
+            for (let i = imagesLoaded; i < imagesLoaded + imagesPerLoad && i < filteredImages.length; i++) {
+                const img = document.createElement('img');
+                img.src = filteredImages[i].src;
+                img.alt = `Image ${i + 1}`;
+                img.loading = 'lazy';
+                img.addEventListener('click', () => {
+                    const pngPath = filteredImages[i].src.replace('.webp', '.png');
+                    const categories = filteredImages[i].categories.join(',');
+                    window.location.href = `viewImage.html?src=${encodeURIComponent(filteredImages[i].src)}&download=${encodeURIComponent(pngPath)}&categories=${encodeURIComponent(categories)}`;
+                });
+                fragment.appendChild(img);
+            }
+
+            gallery.appendChild(fragment);
+            imagesLoaded += imagesPerLoad;
+
+            if (imagesLoaded >= filteredImages.length) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'block';
+            }
+        }
+
+        function setActiveCategory(category) {
+            if (category === 'all') {
+                activeCategories = ['all'];
+                document.querySelectorAll('.categories button').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`button[data-category="all"]`).classList.add('active');
+            } else {
+                const index = activeCategories.indexOf('all');
+                if (index > -1) {
+                    activeCategories.splice(index, 1);
+                }
+
+                const categoryIndex = activeCategories.indexOf(category);
+                if (categoryIndex > -1) {
+                    activeCategories.splice(categoryIndex, 1);
+                    document.querySelector(`button[data-category="${category}"]`).classList.remove('active');
+                } else {
+                    activeCategories.push(category);
+                    document.querySelector(`button[data-category="${category}"]`).classList.add('active');
+                }
+
+                if (activeCategories.length === 0) {
+                    activeCategories = ['all'];
+                    document.querySelector(`button[data-category="all"]`).classList.add('active');
+                } else {
+                    document.querySelector(`button[data-category="all"]`).classList.remove('active');
+                }
+            }
+
+            imagesLoaded = 0;
+            gallery.innerHTML = '';
+            loadImages();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        categories.addEventListener('click', event => {
+            if (event.target.tagName === 'BUTTON') {
+                setActiveCategory(event.target.getAttribute('data-category'));
+            }
+        });
+
+        randomizeBtn.addEventListener('click', () => {
+            imagesLoaded = 0;
+            gallery.innerHTML = '';
+            shuffleArray(imageData);
+            loadImages();
+        });
+
+        loadImages();
+
+        loadMoreBtn.addEventListener('click', loadImages);
+    </script>
+</body>
+</html>
